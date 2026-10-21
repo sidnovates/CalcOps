@@ -45,7 +45,7 @@ public class CalculatorController{
         return new CalculatorResponse("multiply",a,b,result);
     }
 
-    @GetMapping("divide")
+    @GetMapping("/divide")
     public CalculatorResponse divide (
         @RequestParam double a,
         @RequestParam double b
