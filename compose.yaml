@@ -1,9 +1,6 @@
 services:
   calcops:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: calcops:local
+    image: tingdulal/calcops:${IMAGE_TAG:-latest}
     environment:
       SERVER_PORT: "8080"
     restart: unless-stopped

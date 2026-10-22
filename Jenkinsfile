@@ -69,5 +69,35 @@ pipeline {
                 }
             }
         }
+
+        stage('Deploy') {
+            steps {
+                sh '''
+                    set -e
+
+                    echo "Deploying CalcOps image: ${DOCKER_IMAGE}:${BUILD_NUMBER}"
+
+                    IMAGE_TAG="${BUILD_NUMBER}" docker compose -p calcops pull calcops
+
+                    IMAGE_TAG="${BUILD_NUMBER}" docker compose -p calcops up \
+                        -d --no-build --force-recreate calcops nginx
+
+                    echo "Waiting for CalcOps health check..."
+
+                    for i in $(seq 1 30); do
+                        if curl -fsS http://localhost:8081/actuator/health \
+                            | grep -q '"status":"UP"'; then
+                            echo "CalcOps is healthy!"
+                            exit 0
+                        fi
+                        sleep 2
+                    done
+
+                    echo "Deployment health check failed!"
+                    docker compose -p calcops ps
+                    exit 1
+                '''
+            }
+        }
     }
 }
