@@ -100,4 +100,20 @@ pipeline {
             }
         }
     }
+
+    post {
+    always {
+        emailext(
+            subject: "CalcOps Jenkins Build #${BUILD_NUMBER} - ${currentBuild.currentResult}",
+            body: """\
+                Project: CalcOps
+                Build: #${BUILD_NUMBER}
+                Result: ${currentBuild.currentResult}
+                Build URL: ${BUILD_URL}
+                """,
+                to: 'siddniya@gmail.com',
+                cc: 'siddharthanil084@gmail.com'
+            )
+        }
+    }
 }
