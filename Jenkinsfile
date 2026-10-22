@@ -110,7 +110,8 @@ pipeline {
                 Build: #${BUILD_NUMBER}
                 Result: ${currentBuild.currentResult}
                 Build URL: ${BUILD_URL}
-                """
+                """,
+                    to: 'siddniya@gmail.com,siddharthanil084@gmail.com'
             )
         }
     }
