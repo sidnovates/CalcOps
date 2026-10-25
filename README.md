@@ -13,13 +13,45 @@ A containerized RESTful Calculator API built with **Spring Boot 4**, **Java 21**
 ## 🏗️ Architecture
 
 ```mermaid
-flowchart LR
-    Client([Client / curl]) -->|Port 8081| Nginx[Nginx Reverse Proxy]
+flowchart TD
+    Client([Client / curl]) -->|"http://localhost:8081"| Nginx
 
-    subgraph DockerNetwork [calcops-network]
-        Nginx -->|Proxy Pass :8080| CalcOps[CalcOps Spring Boot API]
-        CalcOps --> Actuator[/actuator/health/]
+    subgraph DockerNetwork ["Docker Compose Network (calcops-network)"]
+        direction TB
+        Nginx["Nginx Container (Port 80)"]
+        Nginx -->|"proxy_pass: http://calcops:8080"| CalcOps["CalcOps Spring Boot API (Port 8080)"]
+        CalcOps --> Endpoints["• /api/v1/* (Endpoints)\n• /actuator/health (Health Check)"]
     end
+
+    Jenkins[Jenkins CI/CD] -.->|"Health check: /actuator/health"| Nginx
+```
+
+```text
+Client / curl
+     |
+     | http://localhost:8081
+     v
++-------------------------------------------+
+|          Docker Compose Network           |
+|                                           |
+|   +------------------+                    |
+|   | Nginx Container  |                    |
+|   | Port 80          |                    |
+|   +------------------+                    |
+|            |                              |
+|            | proxy_pass                   |
+|            | http://calcops:8080          |
+|            v                              |
+|   +--------------------------+            |
+|   | CalcOps Spring Boot API  |            |
+|   | Container Port 8080      |            |
+|   | /api/v1/*                |            |
+|   | /actuator/health         |            |
+|   +--------------------------+            |
+|                                           |
++-------------------------------------------+
+
+Jenkins --> Health check: /actuator/health
 ```
 
 ---
