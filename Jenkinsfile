@@ -19,7 +19,7 @@ pipeline {
         stage('Build') {
             steps {
                 sh 'chmod +x mvnw'
-                sh './mvnw -B clean compile'
+                sh './mvnw -B clean package -DskipTests'
             }
         }
 

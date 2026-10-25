@@ -1,6 +1,6 @@
 # CalcOps 🧮 🚀
 
-A production-ready, containerized RESTful Calculator API built with **Spring Boot 4**, **Java 21**, **Docker**, **Nginx**, and **Jenkins CI/CD**.
+A containerized RESTful Calculator API built with **Spring Boot 4**, **Java 21**, **Docker**, **Nginx**, and **Jenkins CI/CD**.
 
 [![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://adoptium.net/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.1-brightgreen.svg)](https://spring.io/projects/spring-boot)
@@ -10,211 +10,129 @@ A production-ready, containerized RESTful Calculator API built with **Spring Boo
 
 ---
 
-## 📌 Overview
-
-**CalcOps** provides arithmetic computation endpoints exposed as a REST API. It is engineered with modern Software Production Engineering (DevOps) principles:
-- **Clean Architecture**: Controller-Service-DTO pattern with immutable Java records.
-- **Robust Exception Handling**: Global exception handler returning standardized JSON error payloads.
-- **Containerization**: Multi-stage Docker build optimizing layer caching and image footprint.
-- **Least Privilege Security**: Container runs under a dedicated, unprivileged `spring` system user.
-- **Orchestration & Reverse Proxy**: Docker Compose setup orchestrating the CalcOps backend with an **Nginx** reverse proxy and automated health checks.
-- **Continuous Integration**: Declarative Jenkins pipeline automating compilation, testing, and JUnit report aggregation.
-
----
-
 ## 🏗️ Architecture
 
 ```mermaid
 flowchart LR
-    Client([Client / Browser / curl]) -->|Port 8081| Nginx[Nginx Reverse Proxy]
-    subgraph Docker Network [calcops_default]
-        Nginx -->|Proxy Pass :8080| CalcOps[CalcOps Spring Boot App]
-        CalcOps --> Actuator[/actuator/health]
+    classDef client fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,color:#01579b;
+    classDef proxy fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#1b5e20;
+    classDef app fill:#ede7f6,stroke:#7e57c2,stroke-width:2px,color:#311b92;
+    classDef health fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#e65100;
+
+    Client([Client / curl]):::client -->|Port 8081| Nginx[Nginx Reverse Proxy]:::proxy
+
+    subgraph Net ["calcops-network (Docker Bridge)"]
+        Nginx -->|Proxy Pass :8080| CalcOps["CalcOps API<br/>(Spring Boot 4 / Java 21)"]:::app
+        CalcOps --> Actuator["Actuator Health<br/>/actuator/health"]:::health
     end
-    Jenkins[Jenkins CI/CD] -.->|Build & Test| CalcOps
 ```
 
 ---
 
-## 📁 Project Structure
+## 📖 API Documentation
 
-```
-calcops/
-├── .dockerignore                 # Docker build exclusions
-├── .gitignore                    # Git exclusions
-├── Dockerfile                    # Multi-stage production Dockerfile
-├── Jenkinsfile                   # Declarative CI/CD pipeline
-├── compose.yaml                  # Docker Compose orchestration (CalcOps + Nginx)
-├── mvnw / mvnw.cmd               # Maven wrappers
-├── pom.xml                       # Maven dependencies & build configuration
-├── nginx/
-│   └── default.conf              # Nginx reverse proxy configuration
-└── src/
-    ├── main/
-    │   ├── java/CalcOps/
-    │   │   ├── CalcopsApplication.java        # Spring Boot main entry point
-    │   │   ├── controller/
-    │   │   │   └── CalculatorController.java  # REST API endpoints (/api/v1/*)
-    │   │   ├── service/
-    │   │   │   └── CalculatorService.java     # Business logic & arithmetic operations
-    │   │   ├── dto/
-    │   │   │   ├── CalculatorResponse.java    # Success response record
-    │   │   │   └── ErrorResponse.java         # Error response record
-    │   │   └── exception/
-    │   │       └── GlobalExceptionHandler.java # Centralized @RestControllerAdvice
-    │   └── resources/
-    │       └── application.properties         # Application configuration
-    └── test/
-        └── java/CalcOps/
-            ├── CalcopsApplicationTests.java   # Context load test
-            ├── controller/
-            │   └── CalculatorControllerTest.java # MockMvc endpoint tests
-            └── service/
-                └── CalculatorServiceTest.java # Unit tests for arithmetic logic
-```
+All calculation endpoints are exposed under `/api/v1` and take two query parameters: `a` and `b`.
 
----
-
-## 🚀 API Documentation
-
-All calculation endpoints are exposed under `/api/v1` and accept query parameters `a` and `b` (floating-point numbers).
-
-### 1. Arithmetic Endpoints
+### Endpoints
 
 | Method | Endpoint | Query Parameters | Description |
 |---|---|---|---|
-| `GET` | `/api/v1/add` | `a` (double), `b` (double) | Adds `a` and `b` |
-| `GET` | `/api/v1/subtract` | `a` (double), `b` (double) | Subtracts `b` from `a` |
-| `GET` | `/api/v1/multiply` | `a` (double), `b` (double) | Multiplies `a` by `b` |
-| `GET` | `/api/v1/divide` | `a` (double), `b` (double) | Divides `a` by `b` |
+| `GET` | `/api/v1/add` | `a` (double), `b` (double) | Returns `a + b` |
+| `GET` | `/api/v1/subtract` | `a` (double), `b` (double) | Returns `a - b` |
+| `GET` | `/api/v1/multiply` | `a` (double), `b` (double) | Returns `a * b` |
+| `GET` | `/api/v1/divide` | `a` (double), `b` (double) | Returns `a / b` |
+| `GET` | `/actuator/health` | _None_ | Service health status |
 
-#### Successful Response Format (`HTTP 200 OK`):
-```json
-{
-  "operation": "add",
-  "a": 10.0,
-  "b": 25.0,
-  "result": 35.0
-}
-```
+### Response Formats
 
-### 2. Error Responses (`HTTP 400 Bad Request`)
-
-CalcOps returns consistent error payloads via `GlobalExceptionHandler`:
-
-* **Division by Zero:**
-  ```bash
-  GET /api/v1/divide?a=10&b=0
-  ```
+* **Success (`200 OK`)**:
   ```json
   {
-    "error": "DIVISION_BY_ZERO",
-    "message": "Cannot divide by zero"
+    "operation": "add",
+    "a": 10.0,
+    "b": 25.0,
+    "result": 35.0
   }
   ```
 
-* **Missing Required Parameter:**
-  ```bash
-  GET /api/v1/add?a=10
-  ```
-  ```json
-  {
-    "error": "MISSING_PARAMETER",
-    "message": "Required parameter 'b' is missing"
-  }
-  ```
-
-* **Invalid Parameter Type:**
-  ```bash
-  GET /api/v1/add?a=hello&b=5
-  ```
-  ```json
-  {
-    "error": "INVALID_PARAMETER",
-    "message": "Parameter 'a' must contain a valid number"
-  }
-  ```
-
-### 3. Actuator & Health Check
-
-* **Health Endpoint**: `GET /actuator/health`
-  ```json
-  {
-    "status": "UP",
-    "groups": ["liveness", "readiness"]
-  }
-  ```
+* **Error Responses (`400 Bad Request`)**:
+  * **Division by Zero**: `{"error": "DIVISION_BY_ZERO", "message": "Cannot divide by zero"}`
+  * **Missing Parameter**: `{"error": "MISSING_PARAMETER", "message": "Required parameter 'b' is missing"}`
+  * **Invalid Parameter**: `{"error": "INVALID_PARAMETER", "message": "Parameter 'a' must contain a valid number"}`
 
 ---
 
-## 🛠️ Quick Start & Running Locally
+## 🔨 Build
 
-### Prerequisites
-- **JDK 21** or later
-- **Docker** & **Docker Compose**
-- **Git**
-
-### 1. Run with Maven (Local Development)
-
-Clone the repository and run the application locally:
+### 1. Build the Application (JAR)
+Using the Maven wrapper:
 ```bash
-git clone https://github.com/sidnovates/CalcOps.git
-cd CalcOps
+./mvnw clean package -DskipTests
+```
+The packaged executable JAR will be located at `target/calcops-0.0.1-SNAPSHOT.jar`.
 
-# Make wrapper executable
-chmod +x mvnw
-
-# Run application on default port 8080
-./mvnw spring-boot:run
+### 2. Build the Docker Image
+Build the multi-stage production container:
+```bash
+docker build -t calcops:latest .
 ```
 
-Access the API directly at:
-```bash
-curl "http://localhost:8080/api/v1/add?a=15&b=30"
-```
+---
 
-### 2. Execute Tests
+## 🧪 Test
 
-Execute the full unit and mock MVC integration test suite:
+Execute the full suite of unit and Spring MVC MockMvc integration tests:
 ```bash
 ./mvnw clean test
 ```
-
-Surefire test reports are saved in `target/surefire-reports/`.
+JUnit XML test reports are automatically generated at:
+```text
+target/surefire-reports/TEST-*.xml
+```
 
 ---
 
-## 🐳 Docker & Docker Compose Deployment
+## 🚀 Run
 
-CalcOps is designed to run in a microservices environment orchestrated with Docker Compose.
-
-### Build and Run with Docker Compose
-
-To build the image and bring up the complete stack (CalcOps + Nginx):
+### Option 1: Run with Docker Compose (Recommended - Full Stack)
+Starts both the CalcOps API and the Nginx reverse proxy on the isolated `calcops-network`:
 ```bash
-docker compose up -d --build
+docker-compose up -d
 ```
+* API is exposed via Nginx on port **8081**.
+* To check service status and health:
+  ```bash
+  docker compose ps
+  ```
+* To stop the services:
+  ```bash
+  docker compose down
+  ```
 
-### Check Service Status & Health
+### Option 2: Run Locally with Maven
+Runs the Spring Boot app directly on port **8080**:
 ```bash
-docker compose ps
+./mvnw spring-boot:run
 ```
 
-Expected output:
-```text
-NAME                IMAGE            COMMAND                  SERVICE   CREATED         STATUS                   PORTS
-calcops-calcops-1   calcops:local    "java -jar app.jar"      calcops   Up (healthy)    8080/tcp
-calcops-nginx-1     nginx:alpine     "/docker-entrypoint.…"   nginx     Up              0.0.0.0:8081->80/tcp
+### Option 3: Run with Docker (Standalone)
+```bash
+docker run -d -p 8080:8080 --name calcops calcops:latest
 ```
 
-### Test via Nginx Reverse Proxy (Port 8081)
+---
 
+## 📡 Call the API
+
+You can call the endpoints using `curl` or any HTTP client:
+
+### Via Nginx Reverse Proxy (Port 8081)
 ```bash
 # Add
-curl "http://localhost:8081/api/v1/add?a=42&b=58"
+curl "http://localhost:8081/api/v1/add?a=10&b=25"
 
 # Subtract
-curl "http://localhost:8081/api/v1/subtract?a=100&b=25"
+curl "http://localhost:8081/api/v1/subtract?a=50&b=15"
 
 # Multiply
 curl "http://localhost:8081/api/v1/multiply?a=6&b=7"
@@ -222,69 +140,16 @@ curl "http://localhost:8081/api/v1/multiply?a=6&b=7"
 # Divide
 curl "http://localhost:8081/api/v1/divide?a=100&b=4"
 
-# Health Check
+# Division by Zero (Returns 400 Bad Request)
+curl "http://localhost:8081/api/v1/divide?a=10&b=0"
+
+# Actuator Health Check
 curl "http://localhost:8081/actuator/health"
 ```
 
-### Stop Services
+### Direct to Spring Boot (Port 8080)
+If running locally via `./mvnw spring-boot:run` or standalone `docker run`:
 ```bash
-docker compose down
+curl "http://localhost:8080/api/v1/add?a=10&b=25"
+curl "http://localhost:8080/actuator/health"
 ```
-
----
-
-## 🔄 CI/CD Pipeline (Jenkins)
-
-The project includes a declarative `Jenkinsfile` for automated build verification:
-
-```groovy
-pipeline {
-    agent any
-
-    options {
-        timestamps()
-    }
-
-    stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-
-        stage('Build') {
-            steps {
-                sh 'chmod +x mvnw'
-                sh './mvnw -B clean compile'
-            }
-        }
-
-        stage('Test') {
-            steps {
-                sh './mvnw -B test'
-            }
-
-            post {
-                always {
-                    junit 'target/surefire-reports/*.xml'
-                }
-            }
-        }
-    }
-}
-```
-
-### Pipeline Stages:
-1. **Checkout**: Checks out source code from Git repository.
-2. **Build**: Compiles source code with `./mvnw -B clean compile`.
-3. **Test**: Executes test suite with `./mvnw -B test`.
-4. **Post Actions**: Collects and archives JUnit test reports (`target/surefire-reports/*.xml`).
-
----
-
-## 🔒 Security Best Practices Implemented
-
-- **Non-Root Execution**: Docker container creates and executes under unprivileged system user `spring:spring`.
-- **Minimal Runtime Footprint**: Multi-stage build leverages `eclipse-temurin:21-jre-jammy` to exclude build tooling from the runtime image.
-- **Layer Caching**: Dependency downloads (`mvn dependency:go-offline`) are isolated from application code changes.
-- **Port Segregation**: Backend container is kept internal to the Docker network; host ingress traffic is mediated strictly by Nginx on port 8081.
