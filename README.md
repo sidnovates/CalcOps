@@ -14,16 +14,11 @@ A containerized RESTful Calculator API built with **Spring Boot 4**, **Java 21**
 
 ```mermaid
 flowchart LR
-    classDef client fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,color:#01579b;
-    classDef proxy fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#1b5e20;
-    classDef app fill:#ede7f6,stroke:#7e57c2,stroke-width:2px,color:#311b92;
-    classDef health fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#e65100;
+    Client([Client / curl]) -->|Port 8081| Nginx[Nginx Reverse Proxy]
 
-    Client([Client / curl]):::client -->|Port 8081| Nginx[Nginx Reverse Proxy]:::proxy
-
-    subgraph Net ["calcops-network (Docker Bridge)"]
-        Nginx -->|Proxy Pass :8080| CalcOps["CalcOps API<br/>(Spring Boot 4 / Java 21)"]:::app
-        CalcOps --> Actuator["Actuator Health<br/>/actuator/health"]:::health
+    subgraph DockerNetwork [calcops-network]
+        Nginx -->|Proxy Pass :8080| CalcOps[CalcOps Spring Boot API]
+        CalcOps --> Actuator[/actuator/health/]
     end
 ```
 
