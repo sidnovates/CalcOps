@@ -23,7 +23,7 @@ flowchart TD
         CalcOps --> Endpoints["• /api/v1/* (Endpoints)\n• /actuator/health (Health Check)"]
     end
 
-    Jenkins[Jenkins CI/CD] -.->|"Health check: /actuator/health"| Nginx
+    Jenkins[Jenkins CI/CD] -.->|"HTTP GET localhost:8081/actuator/health"| Nginx
 ```
 
 ```text
@@ -51,7 +51,7 @@ Client / curl
 |                                           |
 +-------------------------------------------+
 
-Jenkins --> Health check: /actuator/health
+Jenkins --> HTTP GET localhost:8081/actuator/health
 ```
 
 ---
