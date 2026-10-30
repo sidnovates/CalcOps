@@ -53,4 +53,11 @@ class CalculatorServiceTest {
     void testDecimalNumbers() {
         assertEquals(4.0, calculatorService.add(2.5, 1.5), 0.0001);
     }
+
+    @Test
+    void testPower() {
+        assertEquals(8.0, calculatorService.power(2, 3), 0.0001);
+        assertEquals(1.0, calculatorService.power(5, 0), 0.0001);
+        assertEquals(0.25, calculatorService.power(2, -2), 0.0001);
+    }
 }

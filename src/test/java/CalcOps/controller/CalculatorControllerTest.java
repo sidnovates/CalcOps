@@ -60,6 +60,18 @@ class CalculatorControllerTest {
     }
 
     @Test
+    void testPowerEndpoint() throws Exception {
+        when(calculatorService.power(2.0, 3.0)).thenReturn(8.0);
+
+        mockMvc.perform(get("/api/v1/power")
+                        .param("a", "2")
+                        .param("b", "3"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.operation").value("power"))
+                .andExpect(jsonPath("$.result").value(8.0));
+    }
+
+    @Test
     void testDivisionEndpoint() throws Exception {
         when(calculatorService.divide(6.0, 3.0)).thenReturn(2.0);
 

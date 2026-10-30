@@ -55,6 +55,17 @@ public class CalculatorController{
         return new CalculatorResponse("divide", a, b, result);
     }
 
+    @GetMapping("/power")
+    public CalculatorResponse power(
+        @RequestParam double a,
+        @RequestParam double b
+    ){
+        double result = calculatorService.power(a,b);
+
+        return new CalculatorResponse("power",a,b,result);
+    }
+    
+
 
     
 
